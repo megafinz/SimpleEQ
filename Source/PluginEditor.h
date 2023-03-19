@@ -11,13 +11,38 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
-struct CustomRotarySlider : juce::Slider
+struct LookAndFeel : juce::LookAndFeel_V4
 {
-    CustomRotarySlider() : juce::Slider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
-                                        juce::Slider::TextEntryBoxPosition::NoTextBox)
+    void drawRotarySlider(juce::Graphics&, int x, int y, int width, int height,
+                          float sliderPosProportional, float rotaryStartAngle,
+                          float rotaryEndAngle, juce::Slider&) override;
+};
+
+struct RotarySliderWithLabels : juce::Slider
+{
+    RotarySliderWithLabels(juce::RangedAudioParameter& p, juce::String s) : juce::Slider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
+                                        juce::Slider::TextEntryBoxPosition::NoTextBox),
+    param(&p),
+    suffix(s)
     {
-        
+        setLookAndFeel(&lnf);
     }
+    
+    ~RotarySliderWithLabels()
+    {
+        setLookAndFeel(nullptr);
+    }
+    
+    void paint(juce::Graphics&) override;
+    juce::Rectangle<int> getSliderBounds() const;
+    int getTextHeight() const { return 14; }
+    juce::String getDisplayString() const;
+    
+private:
+    LookAndFeel lnf;
+    
+    juce::RangedAudioParameter* param;
+    juce::String suffix;
 };
 
 struct ResponseCurveComponent :
@@ -62,9 +87,9 @@ private:
     // access the processor object that created it.
     SimpleEQAudioProcessor& audioProcessor;
     
-    CustomRotarySlider peakFreqSlider, peakGainSlider, peakQualitySlider;
-    CustomRotarySlider lowCutFreqSlider, lowCutSlopeSlider;
-    CustomRotarySlider highCutFreqSlider, highCutSlopeSlider;
+    RotarySliderWithLabels peakFreqSlider, peakGainSlider, peakQualitySlider;
+    RotarySliderWithLabels lowCutFreqSlider, lowCutSlopeSlider;
+    RotarySliderWithLabels highCutFreqSlider, highCutSlopeSlider;
     
     ResponseCurveComponent responseCurveComponent;
     

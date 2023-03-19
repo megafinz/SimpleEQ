@@ -9,6 +9,76 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+//==============================================================================
+
+void LookAndFeel::drawRotarySlider(juce::Graphics &g,
+                                   int x,
+                                   int y,
+                                   int width,
+                                   int height,
+                                   float sliderPosProportional,
+                                   float rotaryStartAngle,
+                                   float rotaryEndAngle,
+                                   juce::Slider &slider)
+{
+    auto bounds = juce::Rectangle<float>(x, y, width, height);
+    
+    g.setColour(juce::Colours::green);
+    g.fillEllipse(bounds);
+    
+    g.setColour(juce::Colours::greenyellow);
+    g.drawEllipse(bounds, 1.0f);
+    
+    auto centre = bounds.getCentre();
+    
+    juce::Path p;
+    juce::Rectangle<float> r;
+    
+    r.setLeft(centre.getX() - 2);
+    r.setRight(centre.getX() + 2);
+    r.setTop(bounds.getY());
+    r.setBottom(centre.getY());
+    
+    p.addRectangle(r);
+    
+    jassert(rotaryStartAngle < rotaryEndAngle);
+    
+    auto sliderAngleRad = juce::jmap(sliderPosProportional, 0.0f, 1.0f, rotaryStartAngle, rotaryEndAngle);
+    
+    p.applyTransform(juce::AffineTransform().rotated(sliderAngleRad, centre.getX(), centre.getY()));
+    
+    g.fillPath(p);
+}
+
+//==============================================================================
+
+void RotarySliderWithLabels::paint(juce::Graphics &g)
+{
+    auto startAngle = juce::degreesToRadians(225.0f);
+    auto endAngle = juce::degreesToRadians(135.0f) + juce::MathConstants<float>::twoPi;
+    
+    auto range = getRange();
+    auto sliderBounds = getSliderBounds();
+    
+    getLookAndFeel().drawRotarySlider(g,
+                                      sliderBounds.getX(),
+                                      sliderBounds.getY(),
+                                      sliderBounds.getWidth(),
+                                      sliderBounds.getHeight(),
+                                      juce::jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0),
+                                      startAngle,
+                                      endAngle,
+                                      *this);
+}
+
+juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const
+{
+    // TODO.
+    return getLocalBounds();
+}
+
+//==============================================================================
+
 ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p) : audioProcessor(p)
 {
     const auto& params = audioProcessor.getParameters();
@@ -149,8 +219,16 @@ void ResponseCurveComponent::timerCallback()
 }
 
 //==============================================================================
+
 SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p), responseCurveComponent(p),
+: AudioProcessorEditor (&p), audioProcessor (p), peakFreqSlider(*audioProcessor.apvts.getParameter("Peak Freq"), "Hz"),
+peakGainSlider(*audioProcessor.apvts.getParameter("Peak Gain"), "dB"),
+peakQualitySlider(*audioProcessor.apvts.getParameter("Peak Quality"), ""),
+lowCutFreqSlider(*audioProcessor.apvts.getParameter("LowCut Freq"), "Hz"),
+lowCutSlopeSlider(*audioProcessor.apvts.getParameter("LowCut Slope"), "dB/Oct"),
+highCutFreqSlider(*audioProcessor.apvts.getParameter("HighCut Freq"), "Hz"),
+highCutSlopeSlider(*audioProcessor.apvts.getParameter("HighCut Slope"), "dB/Oct"),
+responseCurveComponent(p),
 peakFreqAttachment(audioProcessor.apvts, "Peak Freq", peakFreqSlider),
 peakGainAttachment(audioProcessor.apvts, "Peak Gain", peakGainSlider),
 peakQualityAttachment(audioProcessor.apvts, "Peak Quality", peakQualitySlider),
