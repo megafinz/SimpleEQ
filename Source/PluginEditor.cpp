@@ -372,7 +372,7 @@ highCutSlopeAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlopeSlider
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
         
-    setSize(600, 400);
+    setSize(640, 480);
 }
 
 SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
@@ -391,7 +391,11 @@ void SimpleEQAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     auto bounds = getLocalBounds();
-    auto responseArea = bounds.removeFromTop(bounds.getHeight() * 0.33);
+    auto hRatio = 25.0f / 100.0f;
+    auto responseArea = bounds.removeFromTop(bounds.getHeight() * hRatio);
+    
+    bounds.removeFromTop(5);
+    responseArea.reduce(5, 5);
     
     auto lowCutArea = bounds.removeFromLeft(bounds.getWidth() * 0.33);
     auto highCutArea = bounds.removeFromRight(bounds.getWidth() * 0.5);
