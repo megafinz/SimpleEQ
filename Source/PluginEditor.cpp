@@ -88,6 +88,8 @@ void RotarySliderWithLabels::paint(juce::Graphics &g)
     auto range = getRange();
     auto sliderBounds = getSliderBounds();
     
+    // Draw slider.
+    
     getLookAndFeel().drawRotarySlider(g,
                                       sliderBounds.getX(),
                                       sliderBounds.getY(),
@@ -97,6 +99,31 @@ void RotarySliderWithLabels::paint(juce::Graphics &g)
                                       startAngle,
                                       endAngle,
                                       *this);
+    
+    // Draw outer slider labels.
+    
+    auto centre = sliderBounds.getCentre();
+    auto radius = sliderBounds.getWidth() / 2.0f;
+    
+    g.setColour(juce::Colours::greenyellow);
+    g.setFont(getTextHeight());
+    
+    for (auto label : labels)
+    {
+        jassert(label.pos >= 0.0f);
+        jassert(label.pos <= 1.0f);
+        
+        auto angleRad = juce::jmap(label.pos, 0.0f, 1.0f, startAngle, endAngle);
+        auto labelCentre = centre.getPointOnCircumference(radius + getTextHeight() / 2.0f + 1.0f, angleRad);
+        
+        juce::Rectangle<float> r;
+        
+        r.setSize(g.getCurrentFont().getStringWidth(label.label), getTextHeight());
+        r.setCentre(labelCentre);
+        r.setY(r.getY() + getTextHeight());
+        
+        g.drawFittedText(label.label, r.toNearestInt(), juce::Justification::centred, 1);
+    }
 }
 
 juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const
@@ -316,13 +343,34 @@ lowCutSlopeAttachment(audioProcessor.apvts, "LowCut Slope", lowCutSlopeSlider),
 highCutFreqAttachment(audioProcessor.apvts, "HighCut Freq", highCutFreqSlider),
 highCutSlopeAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlopeSlider)
 {
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
+    peakFreqSlider.labels.add({ 0.0f, "20 Hz" });
+    peakFreqSlider.labels.add({ 1.0f, "20 kHz" });
+    
+    peakGainSlider.labels.add({ 0.0f, "-24 dB" });
+    peakGainSlider.labels.add({ 1.0f, "24 dB" });
+    
+    peakQualitySlider.labels.add({ 0.0f, "0.1" });
+    peakQualitySlider.labels.add({ 1.0f, "10" });
+    
+    lowCutFreqSlider.labels.add({ 0.0f, "20 Hz" });
+    lowCutFreqSlider.labels.add({ 1.0f, "20 kHz" });
+    
+    lowCutSlopeSlider.labels.add({ 0.0f, "12 dB/Oct" });
+    lowCutSlopeSlider.labels.add({ 1.0f, "48 dB/Oct" });
+    
+    highCutFreqSlider.labels.add({ 0.0f, "20 Hz" });
+    highCutFreqSlider.labels.add({ 1.0f, "20 kHz" });
+    
+    highCutSlopeSlider.labels.add({ 0.0f, "12 dB/Oct" });
+    highCutSlopeSlider.labels.add({ 1.0f, "48 dB/Oct" });
     
     for (auto* comp : getComps())
     {
         addAndMakeVisible(comp);
     }
+    
+    // Make sure that before the constructor has finished, you've set the
+    // editor's size to whatever you need it to be.
         
     setSize(600, 400);
 }

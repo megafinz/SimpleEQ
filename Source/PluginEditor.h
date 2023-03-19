@@ -33,6 +33,14 @@ struct RotarySliderWithLabels : juce::Slider
         setLookAndFeel(nullptr);
     }
     
+    struct Label
+    {
+        float pos;
+        juce::String label;
+    };
+    
+    juce::Array<Label> labels;
+    
     void paint(juce::Graphics&) override;
     juce::Rectangle<int> getSliderBounds() const;
     int getTextHeight() const { return 14; }
