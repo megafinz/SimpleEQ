@@ -214,9 +214,11 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (juce::Colours::black);
     
-    auto responseArea = getLocalBounds();
+    g.drawImage(background, getLocalBounds().toFloat());
     
-    auto w = responseArea.getWidth();
+    auto renderArea = getAnalysisArea();
+    
+    auto w = renderArea.getWidth();
     
     auto& lowCut = monoChain.get<ChainPositions::LowCut>();
     auto& peak = monoChain.get<ChainPositions::Peak>();
@@ -282,23 +284,23 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
     
     juce::Path responseCurve;
     
-    const double outputMin = responseArea.getBottom();
-    const double outputMax = responseArea.getY();
+    const double outputMin = renderArea.getBottom();
+    const double outputMax = renderArea.getY();
     
     auto map = [outputMin, outputMax](double input)
     {
         return juce::jmap(input, -24.0, 24.0, outputMin, outputMax);
     };
     
-    responseCurve.startNewSubPath(responseArea.getX(), map(magnitudes.front()));
+    responseCurve.startNewSubPath(renderArea.getX(), map(magnitudes.front()));
     
     for (size_t i = 0; i < magnitudes.size(); i++)
     {
-        responseCurve.lineTo(responseArea.getX() + i, map(magnitudes[i]));
+        responseCurve.lineTo(renderArea.getX() + i, map(magnitudes[i]));
     }
     
     g.setColour(juce::Colours::orange);
-    g.drawRoundedRectangle(responseArea.toFloat(), 4.0f, 1.0f);
+    g.drawRoundedRectangle(getRenderArea().toFloat(), 4.0f, 1.0f);
     
     g.setColour(juce::Colours::white);
     g.strokePath(responseCurve, juce::PathStrokeType(2.0f));
@@ -328,6 +330,74 @@ void ResponseCurveComponent::updateChain()
     updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
     updateCutCoefficients(monoChain.get<ChainPositions::LowCut>(), lowCutCoefficients, chainSettings.lowCutSlope);
     updateCutCoefficients(monoChain.get<ChainPositions::HighCut>(), highCutCoefficients, chainSettings.highCutSlope);
+}
+
+void ResponseCurveComponent::resized()
+{
+    background = juce::Image(juce::Image::PixelFormat::RGB, getWidth(), getHeight(), true);
+    
+    juce::Graphics g(background);
+    
+    // Draw frequency bands.
+    
+    juce::Array<float> freqs
+    {
+        20, 30, 40, 50, 100,
+        200, 300, 400, 500, 1000,
+        2000, 3000, 4000, 5000, 10000,
+        20000
+    };
+    
+    g.setColour(juce::Colours::dimgrey);
+    
+    auto renderArea = getAnalysisArea();
+    auto t = renderArea.getY();
+    auto b = renderArea.getBottom();
+    auto l = renderArea.getX();
+    auto r = renderArea.getRight();
+    auto w = renderArea.getWidth();
+    
+    for (auto freq : freqs)
+    {
+        auto normX = juce::mapFromLog10(freq, 20.0f, 20000.0f);
+        g.drawVerticalLine(l + w * normX, t, b);
+    }
+    
+    // Draw gain bands.
+    
+    juce::Array<float> gains
+    {
+        -24, -12, 0, 12, 24
+    };
+    
+    for (auto gain : gains)
+    {
+        auto y = juce::jmap(gain, -24.0f, 24.0f, float(b), float(t));
+        g.setColour(gain == 0 ? juce::Colours::green : juce::Colours::dimgrey);
+        g.drawHorizontalLine(y, l, r);
+    }
+}
+
+juce::Rectangle<int> ResponseCurveComponent::getRenderArea()
+{
+    auto bounds = getLocalBounds();
+
+    bounds.removeFromTop(12);
+    bounds.removeFromBottom(2);
+    bounds.removeFromLeft(20);
+    bounds.removeFromRight(20);
+    
+    return bounds;
+}
+
+juce::Rectangle<int> ResponseCurveComponent::getAnalysisArea()
+{
+    auto bounds = getRenderArea();
+    
+    bounds.removeFromTop(4);
+    bounds.removeFromBottom(4);
+    
+    return bounds;
 }
 
 //==============================================================================
