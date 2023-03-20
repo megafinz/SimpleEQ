@@ -338,16 +338,6 @@ void ResponseCurveComponent::resized()
     
     juce::Graphics g(background);
     
-    // Draw frequency bands.
-    
-    juce::Array<float> freqs
-    {
-        20, 30, 40, 50, 100,
-        200, 300, 400, 500, 1000,
-        2000, 3000, 4000, 5000, 10000,
-        20000
-    };
-    
     g.setColour(juce::Colours::dimgrey);
     
     auto renderArea = getAnalysisArea();
@@ -357,12 +347,27 @@ void ResponseCurveComponent::resized()
     auto r = renderArea.getRight();
     auto w = renderArea.getWidth();
     
+    // Draw frequency bands.
+    
+    juce::Array<float> freqs
+    {
+        20, 50, 100,
+        200, 500, 1000,
+        2000, 5000, 10000,
+        20000
+    };
+    
+    juce::Array<float> freqPositions;
+    
     for (auto freq : freqs)
     {
-        auto normX = juce::mapFromLog10(freq, 20.0f, 20000.0f);
-        g.drawVerticalLine(l + w * normX, t, b);
+        auto pos = l + juce::mapFromLog10(freq, 20.0f, 20000.0f) * w;
+        
+        freqPositions.add(pos);
+        
+        g.drawVerticalLine(pos, t, b);
     }
-    
+        
     // Draw gain bands.
     
     juce::Array<float> gains
@@ -370,11 +375,99 @@ void ResponseCurveComponent::resized()
         -24, -12, 0, 12, 24
     };
     
+    juce::Array<float> gainPositions;
+    
     for (auto gain : gains)
     {
-        auto y = juce::jmap(gain, -24.0f, 24.0f, float(b), float(t));
+        auto pos = juce::jmap(gain, -24.0f, 24.0f, float(b), float(t));
+        
+        gainPositions.add(pos);
+        
         g.setColour(gain == 0 ? juce::Colours::green : juce::Colours::dimgrey);
-        g.drawHorizontalLine(y, l, r);
+        g.drawHorizontalLine(pos, l, r);
+    }
+    
+    // Draw frequency labels.
+    
+    const int fontHeight = 10;
+    
+    g.setFont(fontHeight);
+    g.setColour(juce::Colours::white);
+    
+    for (int i = 0; i < freqs.size(); i++)
+    {
+        auto freq = freqs[i];
+        auto pos = freqPositions[i];
+        
+        bool addK = false;
+        juce::String label;
+        
+        if (freq >= 1000.f)
+        {
+            addK = true;
+            freq /= 1000.0f;
+        }
+        
+        label << freq << " ";
+        
+        if (addK)
+        {
+            label << "k";
+        }
+        
+        label << "Hz";
+        
+        auto textWidth = g.getCurrentFont().getStringWidth(label);
+        
+        juce::Rectangle<int> textBounds;
+        textBounds.setSize(textWidth, fontHeight);
+        textBounds.setCentre(pos, 0);
+        textBounds.setY(1);
+        
+        g.drawFittedText(label, textBounds, juce::Justification::centred, 1);
+    }
+    
+    // Draw gain labels.
+    
+    for (int i = 0; i < gains.size(); i++)
+    {
+        auto gain = gains[i];
+        auto pos = gainPositions[i];
+        
+        // Right.
+        
+        juce::String label;
+        
+        if (gain > 0)
+        {
+            label << "+";
+        }
+        
+        label << gain << " dB";
+        
+        auto textWidth = g.getCurrentFont().getStringWidth(label);
+        
+        juce::Rectangle<int> textBounds;
+        textBounds.setSize(textWidth, fontHeight);
+        textBounds.setX(getWidth() - textWidth);
+        textBounds.setCentre(textBounds.getCentreX(), pos);
+        
+        g.setColour(gain == 0 ? juce::Colours::green : juce::Colours::white);
+        
+        g.drawFittedText(label, textBounds, juce::Justification::centred, 1);
+        
+        // Left.
+        
+        label.clear();
+        
+        label << gain - 24.0f;
+        
+        textBounds.setX(1);
+        textWidth = g.getCurrentFont().getStringWidth(label);
+        textBounds.setSize(textWidth, fontHeight);
+        
+        g.setColour(juce::Colours::white);
+        g.drawFittedText(label, textBounds, juce::Justification::centred, 1);
     }
 }
 
@@ -382,10 +475,10 @@ juce::Rectangle<int> ResponseCurveComponent::getRenderArea()
 {
     auto bounds = getLocalBounds();
 
-    bounds.removeFromTop(12);
+    bounds.removeFromTop(16);
     bounds.removeFromBottom(2);
-    bounds.removeFromLeft(20);
-    bounds.removeFromRight(20);
+    bounds.removeFromLeft(35);
+    bounds.removeFromRight(35);
     
     return bounds;
 }
