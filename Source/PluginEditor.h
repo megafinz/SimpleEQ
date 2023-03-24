@@ -268,6 +268,11 @@ public:
     
     void resized() override;
     
+    void setAnalysisEnabled(bool enabled)
+    {
+        fftAnalysisEnabled = enabled;
+    }
+    
 private:
     SimpleEQAudioProcessor& audioProcessor;
     
@@ -284,6 +289,8 @@ private:
     juce::Rectangle<int> getAnalysisArea();
     
     PathProducer leftChannelPathProducer, rightChannelPathProducer;
+    
+    bool fftAnalysisEnabled;
 };
 
 //==============================================================================
