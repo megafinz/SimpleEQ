@@ -178,6 +178,7 @@ struct ChainSettings
     float peakFreq { 0.f }, peakGainDecibels { 0.f }, peakQuality { 1.f };
     float lowCutFreq { 0.f }, highCutFreq { 0.f };
     Slope lowCutSlope { Slope::Slope_12 }, highCutSlope { Slope::Slope_12 };
+    bool lowCutBypassed { false }, highCutBypassed { false }, peakBypassed { false };
 };
 
 void updateCoefficients(Coefficients& old, const Coefficients& replacements);

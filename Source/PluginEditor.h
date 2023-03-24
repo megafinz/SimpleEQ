@@ -265,18 +265,23 @@ private:
     // access the processor object that created it.
     SimpleEQAudioProcessor& audioProcessor;
     
+    using APVTS = juce::AudioProcessorValueTreeState;
+    using SliderAttachment = APVTS::SliderAttachment;
+    using ButtonAttachment = APVTS::ButtonAttachment;
+    
+    ResponseCurveComponent responseCurveComponent;
+    
     RotarySliderWithLabels peakFreqSlider, peakGainSlider, peakQualitySlider;
     RotarySliderWithLabels lowCutFreqSlider, lowCutSlopeSlider;
     RotarySliderWithLabels highCutFreqSlider, highCutSlopeSlider;
     
-    ResponseCurveComponent responseCurveComponent;
+    SliderAttachment peakFreqAttachment, peakGainAttachment, peakQualityAttachment;
+    SliderAttachment lowCutFreqAttachment, lowCutSlopeAttachment;
+    SliderAttachment highCutFreqAttachment, highCutSlopeAttachment;
     
-    using APVTS = juce::AudioProcessorValueTreeState;
-    using Attachment = APVTS::SliderAttachment;
+    juce::ToggleButton peakBypassButton, lowCutBypassButton, highCutBypassButton, analyzerEnabledButton;
     
-    Attachment peakFreqAttachment, peakGainAttachment, peakQualityAttachment;
-    Attachment lowCutFreqAttachment, lowCutSlopeAttachment;
-    Attachment highCutFreqAttachment, highCutSlopeAttachment;
+    ButtonAttachment peakBypassAttachment, lowCutBypassAttachment, highCutBypassAttachment, analyzerEnabledAttachment;
     
     std::vector<juce::Component*> getComps();
 
