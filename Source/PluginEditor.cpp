@@ -22,13 +22,14 @@ void LookAndFeel::drawRotarySlider(juce::Graphics &g,
                                    juce::Slider &slider)
 {
     auto bounds = juce::Rectangle<float>(x, y, width, height);
+    auto enabled = slider.isEnabled();
     
     // Draw slider body.
     
-    g.setColour(juce::Colours::green);
+    g.setColour(enabled ? juce::Colours::green : juce::Colours::darkgrey);
     g.fillEllipse(bounds);
     
-    g.setColour(juce::Colours::greenyellow);
+    g.setColour(enabled ? juce::Colours::greenyellow : juce::Colours::grey);
     g.drawEllipse(bounds, 1.0f);
     
     auto* rswl = dynamic_cast<RotarySliderWithLabels*>(&slider);
@@ -688,6 +689,39 @@ analyzerEnabledAttachment(audioProcessor.apvts, "Analyzer Enabled", analyzerEnab
     lowCutBypassButton.setLookAndFeel(&lnf);
     highCutBypassButton.setLookAndFeel(&lnf);
     analyzerEnabledButton.setLookAndFeel(&lnf);
+    
+    auto safePtr = juce::Component::SafePointer<SimpleEQAudioProcessorEditor>(this);
+    
+    peakBypassButton.onClick = [safePtr]()
+    {
+        if (auto* comp = safePtr.getComponent())
+        {
+            auto bypassed = comp->peakBypassButton.getToggleState();
+            comp->peakFreqSlider.setEnabled(!bypassed);
+            comp->peakGainSlider.setEnabled(!bypassed);
+            comp->peakQualitySlider.setEnabled(!bypassed);
+        }
+    };
+    
+    lowCutBypassButton.onClick = [safePtr]()
+    {
+        if (auto* comp = safePtr.getComponent())
+        {
+            auto bypassed = comp->lowCutBypassButton.getToggleState();
+            comp->lowCutFreqSlider.setEnabled(!bypassed);
+            comp->lowCutSlopeSlider.setEnabled(!bypassed);
+        }
+    };
+    
+    highCutBypassButton.onClick = [safePtr]()
+    {
+        if (auto* comp = safePtr.getComponent())
+        {
+            auto bypassed = comp->highCutBypassButton.getToggleState();
+            comp->highCutFreqSlider.setEnabled(!bypassed);
+            comp->highCutSlopeSlider.setEnabled(!bypassed);
+        }
+    };
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
