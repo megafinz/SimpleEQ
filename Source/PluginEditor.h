@@ -144,6 +144,38 @@ private:
     Fifo<PathType> pathFifo;
 };
 
+//==============================================================================
+
+struct PowerButton : juce::ToggleButton { };
+struct AnalyzerButton : juce::ToggleButton
+{
+    void resized() override
+    {
+        auto bounds = getLocalBounds();
+        auto insetRect = bounds.reduced(4);
+        
+        randomPath.clear();
+        
+        juce::Random r;
+        
+        auto rx = insetRect.getX();
+        auto rr = insetRect.getRight();
+        auto ry = insetRect.getY();
+        auto rh = insetRect.getHeight();
+        
+        randomPath.startNewSubPath(rx, ry + rh * r.nextFloat());
+        
+        for (int x = rx + 1; x < rr; x += 2)
+        {
+            randomPath.lineTo(x, ry + rh * r.nextFloat());
+        }
+    }
+    
+    juce::Path randomPath;
+};
+
+//==============================================================================
+
 struct LookAndFeel : juce::LookAndFeel_V4
 {
     void drawRotarySlider(juce::Graphics&, int x, int y, int width, int height,
@@ -152,6 +184,10 @@ struct LookAndFeel : juce::LookAndFeel_V4
     
     void drawToggleButton(juce::Graphics&, juce::ToggleButton&,
                           bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override;
+    
+private:
+    void drawPowerButton(juce::Graphics&, PowerButton&);
+    void drawAnalyzerButton(juce::Graphics&, AnalyzerButton&);
 };
 
 struct RotarySliderWithLabels : juce::Slider
@@ -251,6 +287,7 @@ private:
 };
 
 //==============================================================================
+
 /**
 */
 class SimpleEQAudioProcessorEditor : public juce::AudioProcessorEditor
@@ -282,7 +319,8 @@ private:
     SliderAttachment lowCutFreqAttachment, lowCutSlopeAttachment;
     SliderAttachment highCutFreqAttachment, highCutSlopeAttachment;
     
-    juce::ToggleButton peakBypassButton, lowCutBypassButton, highCutBypassButton, analyzerEnabledButton;
+    PowerButton peakBypassButton, lowCutBypassButton, highCutBypassButton;
+    AnalyzerButton analyzerEnabledButton;
     
     ButtonAttachment peakBypassAttachment, lowCutBypassAttachment, highCutBypassAttachment, analyzerEnabledAttachment;
     

@@ -83,9 +83,21 @@ void LookAndFeel::drawToggleButton(juce::Graphics& g,
                                    bool shouldDrawButtonAsHighlighted,
                                    bool shouldDrawButtonAsDown)
 {
+    if (auto* pb = dynamic_cast<PowerButton*>(&toggleButton))
+    {
+        drawPowerButton(g, *pb);
+    }
+    else if (auto* ab = dynamic_cast<AnalyzerButton*>(&toggleButton))
+    {
+        drawAnalyzerButton(g, *ab);
+    }
+}
+
+void LookAndFeel::drawPowerButton(juce::Graphics& g, PowerButton& button)
+{
     juce::Path powerButton;
     
-    auto bounds = toggleButton.getLocalBounds();
+    auto bounds = button.getLocalBounds();
     auto size = juce::jmin(bounds.getWidth(), bounds.getHeight()) - 6;
     auto r = bounds.withSizeKeepingCentre(size, size);
     
@@ -104,12 +116,24 @@ void LookAndFeel::drawToggleButton(juce::Graphics& g,
     
     juce::PathStrokeType pst(2.0f, juce::PathStrokeType::JointStyle::curved);
     
-    auto colour = toggleButton.getToggleState() ? juce::Colours::dimgrey : juce::Colours::greenyellow;
+    auto colour = button.getToggleState() ? juce::Colours::dimgrey : juce::Colours::greenyellow;
     
     g.setColour(colour);
     g.strokePath(powerButton, pst);
     
     g.drawEllipse(r.toFloat(), 2.0f);
+}
+
+void LookAndFeel::drawAnalyzerButton(juce::Graphics& g, AnalyzerButton& button)
+{
+    auto colour = button.getToggleState() ? juce::Colours::greenyellow : juce::Colours::dimgrey;
+    
+    g.setColour(colour);
+    
+    auto bounds = button.getLocalBounds();
+    g.drawRect(bounds);
+    
+    g.strokePath(button.randomPath, juce::PathStrokeType(1.0f));
 }
 
 //==============================================================================
@@ -663,6 +687,7 @@ analyzerEnabledAttachment(audioProcessor.apvts, "Analyzer Enabled", analyzerEnab
     peakBypassButton.setLookAndFeel(&lnf);
     lowCutBypassButton.setLookAndFeel(&lnf);
     highCutBypassButton.setLookAndFeel(&lnf);
+    analyzerEnabledButton.setLookAndFeel(&lnf);
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -675,6 +700,7 @@ SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
     peakBypassButton.setLookAndFeel(nullptr);
     lowCutBypassButton.setLookAndFeel(nullptr);
     highCutBypassButton.setLookAndFeel(nullptr);
+    analyzerEnabledButton.setLookAndFeel(nullptr);
 }
 
 //==============================================================================
@@ -688,7 +714,16 @@ void SimpleEQAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
+    
     auto bounds = getLocalBounds();
+    
+    auto analyzerEnabledArea = bounds.removeFromTop(25);
+    analyzerEnabledArea.setWidth(100);
+    analyzerEnabledArea.setX(5);
+    analyzerEnabledArea.removeFromTop(2);
+    
+    bounds.removeFromTop(5);
+    
     auto hRatio = 25.0f / 100.0f;
     auto responseArea = bounds.removeFromTop(bounds.getHeight() * hRatio);
     
@@ -720,6 +755,8 @@ void SimpleEQAudioProcessorEditor::resized()
     peakFreqSlider.setBounds(peakFreqArea);
     peakGainSlider.setBounds(peakGainArea);
     peakQualitySlider.setBounds(peakQualityArea);
+    
+    analyzerEnabledButton.setBounds(analyzerEnabledArea);
     
     responseCurveComponent.setBounds(responseArea);
 }
